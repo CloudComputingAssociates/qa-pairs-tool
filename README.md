@@ -213,6 +213,6 @@ db.getCollection('qa-pairs').find({}).forEach(doc => {
 
 ---
 
-**Author:** Marty Patterson  
+**Author:** Marty Mazurik  
 **Project:** YouEatingHealthy (YEH)  
 **Target:** April 15, 2025 MVP
