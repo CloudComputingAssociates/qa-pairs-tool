@@ -3,93 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QA Pairs Corpus Tool</title>
+    <title>QA Pairs Tool</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎯 QA Pairs Corpus Tool</h1>
-            <p>Building training data for YouEatingHealthy (YEH) LLM</p>
+            <h1>🎯 QA Pairs Tool</h1>
+            <p>Tool allows adding reverse-prompt and FAQ data for YEH App</p>
         </header>
 
         <main>
             <section class="form-section">
-                <h2>📝 Question & Answer Entry</h2>
-                
-                <div class="form-group full-width">
-                    <label for="prompt">Human Question/Prompt *</label>
-                    <textarea 
-                        id="prompt" 
-                        placeholder="How much protein should I eat on carnivore?"
-                        required
-                        rows="3"
-                    ></textarea>
+                <div class="section-header">
+                    <h2>📝 Prompt Entry</h2>
+                    <div class="header-actions">
+                        <button id="clear-btn" class="icon-btn" onclick="clearForm()" title="Clear form">&#x21ba;</button>
+                        <button id="save-btn" class="icon-btn save-btn" onclick="saveToMongoDB()" title="Save">&#x2713;</button>
+                        <button id="close-btn" class="icon-btn close-btn" onclick="closeForm()" title="Close">&#x2715;</button>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="doc-type">Type</label>
+                        <select id="doc-type" onchange="onTypeChange()">
+                            <option value="faq" selected>FAQ</option>
+                            <option value="reverse-prompt">Reverse Prompt</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="context">Context</label>
+                        <select id="context" disabled onchange="onContextChange()">
+                            <option value="">-- Select Type First --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="category">Category</label>
+                        <select id="category">
+                            <option value="">-- Select Category --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subcategory">Subcategory (Optional)</label>
+                        <input
+                            type="text"
+                            id="subcategory"
+                            placeholder="e.g., specific topic"
+                        >
+                    </div>
                 </div>
 
                 <div class="form-group full-width">
-                    <label for="response">YEH Response *</label>
-                    <textarea 
-                        id="response" 
-                        placeholder="Target 0.8-1.2g per pound of body weight..."
-                        required
-                        rows="6"
+                    <label for="prompt">Prompt</label>
+                    <textarea
+                        id="prompt"
+                        placeholder="Enter your prompt..."
+                        rows="2"
                     ></textarea>
+                </div>
+
+                <!-- FAQ-specific field -->
+                <div id="faq-fields" class="form-group full-width">
+                    <label for="response">Response</label>
+                    <textarea
+                        id="response"
+                        placeholder="Enter the answer..."
+                        rows="4"
+                    ></textarea>
+                </div>
+
+                <!-- Reverse-prompt-specific fields -->
+                <div id="reverse-prompt-fields" style="display: none;">
+                    <div class="form-group full-width">
+                        <label for="action">Action</label>
+                        <textarea
+                            id="action"
+                            placeholder="Code action or AI prompt for user consideration..."
+                            rows="4"
+                        ></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label for="next-prompt">Next Prompt</label>
+                        <input
+                            type="text"
+                            id="next-prompt"
+                            placeholder="Link to follow-on prompt or 'end'"
+                        >
+                    </div>
                 </div>
 
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="source">Source (Optional)</label>
-                        <input 
-                            type="text" 
-                            id="source" 
-                            placeholder="e.g., The Carnivore Code"
+                        <input
+                            type="text"
+                            id="source"
+                            placeholder="e.g., documentation"
                         >
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="attribution">Attribution (Optional)</label>
-                        <input 
-                            type="text" 
-                            id="attribution" 
-                            placeholder="e.g., Paul Saladino"
+                        <input
+                            type="text"
+                            id="attribution"
+                            placeholder="e.g., author name"
                         >
                     </div>
                 </div>
-
-                <div class="content-stats">
-                    <span id="prompt-count">Prompt: 0 tokens</span>
-                    <span id="response-count">Response: 0 tokens</span>
-                    <span id="total-count">Total: 0 tokens</span>
-                </div>
-
-                <div class="actions">
-                    <button id="add-btn" onclick="addToList()">➕ Add to List</button>
-                    <button id="clear-btn" onclick="clearForm()">🗑️ Clear</button>
-                </div>
             </section>
 
-            <section class="list-section">
-                <div class="list-header">
-                    <h2>📋 QA Pairs Queue</h2>
-                    <span id="list-count" class="badge">0 items</span>
-                </div>
-                
-                <div id="qa-list" class="qa-list">
-                    <p class="empty-message">No items yet. Add your first Q&A pair above!</p>
-                </div>
-
-                <div class="actions" id="insert-actions" style="display: none;">
-                    <button id="insert-btn" onclick="insertToMongoDB()">
-                        💾 Insert into MongoDB
-                    </button>
-                </div>
-            </section>
-
-            <section class="status-section">
-                <div id="status-message"></div>
-            </section>
         </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <p>You have unsaved data. Are you sure you want to close?</p>
+            <div class="modal-actions">
+                <button onclick="confirmClose(false)">Cancel</button>
+                <button onclick="confirmClose(true)" class="danger">Close Anyway</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

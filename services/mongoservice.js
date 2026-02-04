@@ -11,15 +11,15 @@ class MongoService {
         if (!this.client) {
             this.client = new MongoClient(this.connectionString);
             await this.client.connect();
-            this.db = this.client.db('corpora');
-            console.log('✅ Connected to MongoDB - corpora database');
+            this.db = this.client.db();
+            console.log('✅ Connected to MongoDB - yeh database');
         }
         return this.db;
     }
 
     async insertQAPairs(documents) {
         const db = await this.connect();
-        const collection = db.collection('qa-pairs');
+        const collection = db.collection('promptme');
         
         // Add timestamps to all documents
         const documentsWithTimestamps = documents.map(doc => ({
@@ -33,27 +33,27 @@ class MongoService {
 
     async findQAPairs(query = {}, limit = 10) {
         const db = await this.connect();
-        const collection = db.collection('qa-pairs');
+        const collection = db.collection('promptme');
         return await collection.find(query).limit(limit).toArray();
     }
 
     async getQAPairById(id) {
         const db = await this.connect();
-        const collection = db.collection('qa-pairs');
+        const collection = db.collection('promptme');
         const { ObjectId } = require('mongodb');
         return await collection.findOne({ _id: new ObjectId(id) });
     }
 
     async deleteQAPair(id) {
         const db = await this.connect();
-        const collection = db.collection('qa-pairs');
+        const collection = db.collection('promptme');
         const { ObjectId } = require('mongodb');
         return await collection.deleteOne({ _id: new ObjectId(id) });
     }
 
     async getCollectionStats() {
         const db = await this.connect();
-        const collection = db.collection('qa-pairs');
+        const collection = db.collection('promptme');
         
         const stats = await collection.aggregate([
             {
@@ -87,6 +87,20 @@ class MongoService {
             withSource: 0,
             withAttribution: 0
         };
+    }
+
+    async getContexts(type = null) {
+        const db = await this.connect();
+        const collection = db.collection('contexts');
+        const query = type ? { type } : {};
+        return await collection.find(query).sort({ name: 1 }).toArray();
+    }
+
+    async getCategories(context = null) {
+        const db = await this.connect();
+        const collection = db.collection('categories');
+        const query = context ? { context } : {};
+        return await collection.find(query).sort({ name: 1 }).toArray();
     }
 
     async close() {

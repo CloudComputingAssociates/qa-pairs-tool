@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "faq.schema.json",
+  "title": "ReversePrompt",
+  "description": "Schema for FAQ prompt, response drop-downs and Help areas",
+  "type": "object",
+  "required": ["type", "context", "category", "prompt", "response"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "faq",
+      "description": "Document type discriminator"
+    },
+    "context": {
+      "type": "string",
+      "description": "Where using these FAQ's in the app"
+    },
+    "category": {
+      "type": "string",
+      "description": "Category from categories collection (dropdown)"
+    },
+    "subcategory": {
+      "type": ["string", "null"],
+      "description": "Optional subcategory (free text)"
+    },
+    "prompt": {
+      "type": "string",
+      "description": "Frequently asked question"
+    },
+    "response": {
+      "type": "string",
+      "description": "Answer to question"
+    },
+    "source": {
+      "type": ["string", "null"],
+      "description": "Origin or reference source for this training pair"
+    },
+    "attribution": {
+      "type": ["string", "null"],
+      "description": "Author or contributor attribution"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when the document was created"
+    }
+  }
+}

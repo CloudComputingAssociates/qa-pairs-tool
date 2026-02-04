@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
 });
 
 // Batch insert QA pairs to MongoDB
-app.post('/api/insert-qa-pairs', async (req, res) => {
+app.post('/api/insert-promptme', async (req, res) => {
     try {
         const { documents } = req.body;
         
@@ -39,12 +39,22 @@ app.post('/api/insert-qa-pairs', async (req, res) => {
             });
         }
 
-        // Validate each document has required fields
+        // Validate each document has required fields based on type
         for (let i = 0; i < documents.length; i++) {
             const doc = documents[i];
-            if (!doc.prompt || !doc.response) {
-                return res.status(400).json({ 
-                    error: `Document ${i + 1} missing required fields: prompt and response` 
+            if (!doc.type || !doc.context || !doc.category || !doc.prompt) {
+                return res.status(400).json({
+                    error: `Document ${i + 1} missing required fields: type, context, category, and prompt`
+                });
+            }
+            if (doc.type === 'faq' && !doc.response) {
+                return res.status(400).json({
+                    error: `Document ${i + 1} (FAQ) missing required field: response`
+                });
+            }
+            if (doc.type === 'reverse-prompt' && (!doc.action || !doc['next-prompt'])) {
+                return res.status(400).json({
+                    error: `Document ${i + 1} (reverse-prompt) missing required fields: action and next-prompt`
                 });
             }
         }
@@ -79,8 +89,32 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
+// Get contexts (filtered by type if provided)
+app.get('/api/contexts', async (req, res) => {
+    try {
+        const type = req.query.type || null;
+        const contexts = await mongoService.getContexts(type);
+        res.json(contexts);
+    } catch (error) {
+        console.error('Error fetching contexts:', error);
+        res.status(500).json({ error: 'Failed to fetch contexts' });
+    }
+});
+
+// Get categories (filtered by context if provided)
+app.get('/api/categories', async (req, res) => {
+    try {
+        const context = req.query.context || null;
+        const categories = await mongoService.getCategories(context);
+        res.json(categories);
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+});
+
 // Get recent QA pairs (optional endpoint for admin/debugging)
-app.get('/api/qa-pairs', async (req, res) => {
+app.get('/api/promptme', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit) || 10;
         const qaPairs = await mongoService.findQAPairs({}, limit);
@@ -98,7 +132,7 @@ app.get('/api/health', async (req, res) => {
         res.json({ 
             status: 'healthy', 
             database: 'connected',
-            collection: 'qa-pairs',
+            collection: 'promptme',
             timestamp: new Date().toISOString()
         });
     } catch (error) {
@@ -148,5 +182,5 @@ app.listen(PORT, () => {
     console.log(`🚀 QA Pairs Corpus Tool running on http://localhost:${PORT}`);
     console.log(`🎯 Building training data for YouEatingHealthy LLM`);
     console.log(`📊 Database: ${process.env.MONGODB_URI || 'mongodb://localhost:27017/corpora'}`);
-    console.log(`📁 Collection: qa-pairs`);
+    console.log(`📁 Collection: promptme`);
 });
