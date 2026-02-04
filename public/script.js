@@ -116,8 +116,13 @@ function validateForm() {
     }
 
     if (type === 'reverse-prompt') {
+        const name = document.getElementById('name').value.trim();
         const action = document.getElementById('action').value.trim();
         const nextPrompt = document.getElementById('next-prompt').value.trim();
+        if (!name) {
+            showToast('Please enter a name (slug identifier)', true);
+            return false;
+        }
         if (!action) {
             showToast('Please enter an action', true);
             return false;
@@ -137,6 +142,7 @@ function validateForm() {
 
 function hasUnsavedData() {
     const subcategory = document.getElementById('subcategory').value.trim();
+    const name = document.getElementById('name').value.trim();
     const prompt = document.getElementById('prompt').value.trim();
     const response = document.getElementById('response').value.trim();
     const action = document.getElementById('action').value.trim();
@@ -145,7 +151,7 @@ function hasUnsavedData() {
     const attribution = document.getElementById('attribution').value.trim();
 
     // Only check data entry fields, not Type/Context/Category (those are session state)
-    return subcategory || prompt || response || action || nextPrompt || source || attribution;
+    return subcategory || name || prompt || response || action || nextPrompt || source || attribution;
 }
 
 // ============================================================================
@@ -154,6 +160,7 @@ function hasUnsavedData() {
 
 function clearForm() {
     document.getElementById('subcategory').value = '';
+    document.getElementById('name').value = '';
     document.getElementById('prompt').value = '';
     document.getElementById('response').value = '';
     document.getElementById('action').value = '';
@@ -199,22 +206,36 @@ async function saveToMongoDB() {
     const source = document.getElementById('source').value.trim() || null;
     const attribution = document.getElementById('attribution').value.trim() || null;
 
-    let item = {
-        type,
-        context,
-        category,
-        subcategory,
-        prompt,
-        source,
-        attribution,
-        created_at: new Date().toISOString()
-    };
+    let item;
 
     if (type === 'faq') {
-        item.response = document.getElementById('response').value.trim();
+        // Schema order: type, context, category, subcategory, prompt, response, source, attribution, created_at
+        item = {
+            type,
+            context,
+            category,
+            subcategory,
+            prompt,
+            response: document.getElementById('response').value.trim(),
+            source,
+            attribution,
+            created_at: new Date().toISOString()
+        };
     } else if (type === 'reverse-prompt') {
-        item.action = document.getElementById('action').value.trim();
-        item['next-prompt'] = document.getElementById('next-prompt').value.trim();
+        // Schema order: type, name, context, category, subcategory, prompt, action, next-prompt, source, attribution, created_at
+        item = {
+            type,
+            name: document.getElementById('name').value.trim(),
+            context,
+            category,
+            subcategory,
+            prompt,
+            action: document.getElementById('action').value.trim(),
+            'next-prompt': document.getElementById('next-prompt').value.trim(),
+            source,
+            attribution,
+            created_at: new Date().toISOString()
+        };
     }
 
     const saveBtn = document.getElementById('save-btn');

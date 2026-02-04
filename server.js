@@ -52,9 +52,9 @@ app.post('/api/insert-promptme', async (req, res) => {
                     error: `Document ${i + 1} (FAQ) missing required field: response`
                 });
             }
-            if (doc.type === 'reverse-prompt' && (!doc.action || !doc['next-prompt'])) {
+            if (doc.type === 'reverse-prompt' && (!doc.name || !doc.action || !doc['next-prompt'])) {
                 return res.status(400).json({
-                    error: `Document ${i + 1} (reverse-prompt) missing required fields: action and next-prompt`
+                    error: `Document ${i + 1} (reverse-prompt) missing required fields: name, action, and next-prompt`
                 });
             }
         }
